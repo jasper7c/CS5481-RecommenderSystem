@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split  
 
 class DataProcessor:  
-    def __init__(self, data_path='data/raw/'):  
+    def __init__(self, data_path='data/raw/'):
         """初始化数据处理器  
 
         Args:  
@@ -24,7 +24,28 @@ class DataProcessor:
         movies_df = pd.read_csv(f"{self.data_path}movies.csv")  
         
         print(f"Loaded ratings: {len(ratings_df)}, movies: {len(movies_df)}")  
-        return ratings_df, movies_df  
+        return ratings_df, movies_df
+
+    def load_dat_data(self):
+        """加载MovieLens数据集的.dat文件
+
+        Returns:
+            ratings_df: 评分数据
+            movies_df: 电影数据
+            users_df: 用户数据
+        """
+        # 加载评分数据
+        ratings_df = pd.read_csv(f"{self.data_path}ratings.dat", sep='::', engine='python', encoding='ISO-8859-1',
+                                 names=['userId', 'movieId', 'rating', 'timestamp'])
+        # 加载电影数据
+        movies_df = pd.read_csv(f"{self.data_path}movies.dat", sep='::', engine='python', encoding='ISO-8859-1',
+                                names=['movieId', 'title', 'genres'])
+        # 加载用户数据
+        users_df = pd.read_csv(f"{self.data_path}users.dat", sep='::', engine='python', encoding='ISO-8859-1',
+                               names=['userId', 'gender', 'age', 'occupation', 'zip-code'])
+
+        print(f"Loaded ratings: {len(ratings_df)}, movies: {len(movies_df)}, users: {len(users_df)}")
+        return ratings_df, movies_df, users_df
     
     def preprocess(self, ratings_df):  
         """预处理评分数据  
@@ -48,9 +69,11 @@ class DataProcessor:
         movie_map = {old: new for new, old in enumerate(movie_ids)}  
         
         processed_df['user_idx'] = processed_df['userId'].map(user_map)  
-        processed_df['movie_idx'] = processed_df['movieId'].map(movie_map)  
+        processed_df['movie_idx'] = processed_df['movieId'].map(movie_map)
+
+        # processed_df = processed_df.sample(frac=0.1, random_state=42)
         
-        return processed_df  
+        return processed_df
     
     def create_user_item_matrix(self, ratings_df):  
         """创建用户-物品评分矩阵  
@@ -106,4 +129,28 @@ class DataProcessor:
         test_df = pd.concat(test_data)  
         
         print(f"Training set: {len(train_df)}, Test set: {len(test_df)}")  
-        return train_df, test_df  
+        return train_df, test_df
+
+    def split_data_by_time(self, ratings_df, test_size=0.2):
+        """根据时间戳划分训练集和测试集
+
+        Args:
+            ratings_df: 预处理后的评分数据
+            test_size: 测试集比例
+
+        Returns:
+            train_df: 训练集
+            test_df: 测试集
+        """
+        # 按时间戳排序
+        ratings_df = ratings_df.sort_values('timestamp')
+
+        # 计算划分点
+        split_index = int(len(ratings_df) * (1 - test_size))
+
+        # 划分训练集和测试集
+        train_df = ratings_df.iloc[:split_index]
+        test_df = ratings_df.iloc[split_index:]
+
+        print(f"Training set: {len(train_df)}, Test set: {len(test_df)}")
+        return train_df, test_df
