@@ -83,7 +83,79 @@ class Evaluator:
                 
             total_users += 1  
             
-        return ndcg_sum / total_users if total_users > 0 else 0  
+        return ndcg_sum / total_users if total_users > 0 else 0
+
+    def mrr_at_k(self, recommendations, k=10):
+        """计算MRR@K (Mean Reciprocal Rank at K)
+
+        Args:
+            recommendations: {user_id: [movie_id1, movie_id2, ...]} 格式的推荐结果
+            k: 推荐列表长度
+
+        Returns:
+            MRR@K 值
+        """
+        mrr_sum = 0
+        total_users = 0
+
+        for user_id, ground_truth in self.user_items.items():
+            if user_id not in recommendations:
+                continue
+
+            recs = recommendations[user_id][:k]
+
+            # 找到第一个相关物品的排名
+            rank = 0
+            for i, item in enumerate(recs):
+                if item in ground_truth:
+                    rank = i + 1  # 排名从1开始
+                    break
+
+            # 计算 Reciprocal Rank
+            if rank > 0:
+                mrr_sum += 1 / rank
+            else:
+                mrr_sum += 0
+
+            total_users += 1
+
+        return mrr_sum / total_users if total_users > 0 else 0
+
+    def recall_at_k(self, recommendations, k=10):
+        """计算Recall@K (召回率@K)
+
+        Args:
+            recommendations: {user_id: [movie_id1, movie_id2, ...]} 格式的推荐结果
+            k: 推荐列表长度
+
+        Returns:
+            Recall@K 值
+        """
+        recall_sum = 0
+        total_users = 0
+
+        for user_id, ground_truth in self.user_items.items():
+            if user_id not in recommendations:
+                continue
+
+            # 获取推荐列表的前K个物品
+            recs = recommendations[user_id][:k]
+
+            # 将推荐列表和真实列表转换为集合，方便计算交集
+            recs_set = set(recs)
+            ground_truth_set = set(ground_truth)
+
+            # 计算推荐列表中与真实相关物品的重叠数量
+            hit_count = len(recs_set & ground_truth_set)
+
+            # 计算Recall
+            if len(ground_truth_set) > 0:
+                recall = hit_count / len(ground_truth_set)
+                recall_sum += recall
+
+            total_users += 1
+
+        return recall_sum / total_users if total_users > 0 else 0
     
     def evaluate(self, recommender, k_values=[5, 10, 20]):  
         """评估推荐系统在多个K值下的性能  
@@ -108,9 +180,13 @@ class Evaluator:
         results = {}  
         for k in k_values:  
             hr = self.hr_at_k(recommendations, k)  
-            ndcg = self.ndcg_at_k(recommendations, k)  
+            ndcg = self.ndcg_at_k(recommendations, k)
+            mrr = self.mrr_at_k(recommendations, k)
+            recall = self.recall_at_k(recommendations, k)
             
             results[f'HR@{k}'] = hr  
-            results[f'NDCG@{k}'] = ndcg  
+            results[f'NDCG@{k}'] = ndcg
+            results[f'MRR@{k}'] = mrr
+            results[f'Recall@{k}'] = recall
         
         return results  
