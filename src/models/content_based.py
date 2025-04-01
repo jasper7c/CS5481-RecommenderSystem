@@ -49,15 +49,24 @@ class ContentBased(BaseRecommender):
     def _preprocess_movie_features(self):  
         """预处理电影特征，将类型转换为TF-IDF向量"""  
         # 确保genres是字符串格式  
-        self.movies_df['genres'] = self.movies_df['genres'].fillna('')  
+        self.movies_df['genres'] = self.movies_df['genres'].fillna('')
+        self.movies_df['title'] = self.movies_df['title'].fillna('')
         
         # 替换分隔符以便TF-IDF处理  
-        self.movies_df['genres_str'] = self.movies_df['genres'].str.replace('|', ' ')  
+        self.movies_df['genres_str'] = self.movies_df['genres'].str.replace('|', ' ')
+
+        # 合并标题和类型信息
+        self.movies_df['combined'] = self.movies_df['title'] + " " + self.movies_df['genres_str']
         
-        # 使用TF-IDF向量化电影类型  
-        print("Vectorizing movie genres...")  
-        tfidf = TfidfVectorizer(stop_words='english')  
-        self.tfidf_matrix = tfidf.fit_transform(self.movies_df['genres_str'])  
+        # # 使用TF-IDF向量化电影类型
+        # print("Vectorizing movie genres...")
+        # tfidf = TfidfVectorizer(stop_words='english')
+        # self.tfidf_matrix = tfidf.fit_transform(self.movies_df['genres_str'])
+
+        # 使用TF-IDF向量化合并后的特征
+        print("Vectorizing combined features...")
+        tfidf = TfidfVectorizer(stop_words='english')
+        self.tfidf_matrix = tfidf.fit_transform(self.movies_df['combined'])
         
         # 如果GPU可用，转移到GPU  
         if self.use_gpu:  
