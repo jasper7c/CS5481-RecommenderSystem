@@ -1,0 +1,16 @@
+# 忽略 Yelp JSON dat数据文件
+data/Yelp JSON/**/*.json
+data/Yelp JSON/**/*.csv
+# 忽略 checkpoint、cache 和 pyc 文件
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# 忽略 macOS 系统文件
+.DS_Store
+data/__MACOSX/
+
+# 忽略 tar 压缩包
+*.tar
+
+.idea/

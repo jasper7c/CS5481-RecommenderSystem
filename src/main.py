@@ -22,10 +22,11 @@ def main():
     
     # 1. 加载和预处理数据  
     print("\n=== Data Processing ===")  
-    data_processor = DataProcessor(data_path='data/ml-1m/')
+    # data_processor = DataProcessor(data_path='data/ml-1m/')
+    data_processor = DataProcessor(data_path='../data/Yelp JSON/yelp_dataset/')
     # ratings_df, movies_df = data_processor.load_data()
-    ratings_df, movies_df, users_df = data_processor.load_dat_data()
-    
+    # ratings_df, movies_df, users_df = data_processor.load_dat_data()
+    ratings_df, movies_df, users_df = data_processor.load_yelp_csv_data()
     # 预处理数据  
     processed_df = data_processor.preprocess(ratings_df)  
     
@@ -37,8 +38,8 @@ def main():
     # user_cf = UserCF(k=20, use_gpu=True)
     # user_cf = ItemCF(k=20)
     # user_cf = SVDRecommender(n_factors=100, n_epochs=50)
-    # user_cf = LightGCN(embed_dim=64, n_layers=3, epochs=20, lr=0.001)
-    user_cf = NGCNRecommender(epochs=30)
+    user_cf = LightGCN(embed_dim=64, n_layers=3, epochs=20, lr=0.01)
+    # user_cf = NGCNRecommender(epochs=30)
     # user_cf = RandomRecommender()
     print(f"Training {user_cf.name} model...")  
     user_cf.fit(train_df)  

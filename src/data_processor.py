@@ -46,7 +46,40 @@ class DataProcessor:
 
         print(f"Loaded ratings: {len(ratings_df)}, movies: {len(movies_df)}, users: {len(users_df)}")
         return ratings_df, movies_df, users_df
-    
+
+    def load_yelp_csv_data(self):
+        """
+        加载 Yelp 数据集（CSV 格式）
+
+        Returns:
+            ratings_df: 用户评分数据（评论）
+            movies_df: 商家信息（等价于电影）
+            users_df: 用户信息
+        """
+        # 加载评分数据
+        ratings_df = pd.read_csv(f"{self.data_path}review.csv")
+
+        # 加载商家信息（等价于电影信息）
+        movies_df = pd.read_csv(f"{self.data_path}business.csv")
+
+        # 加载用户信息（可选）
+        users_df = pd.read_csv(f"{self.data_path}user.csv")
+
+        # 重命名字段统一格式
+        ratings_df.rename(columns={
+            'user_id': 'userId',
+            'business_id': 'movieId',  # 为了和通用结构兼容
+            'stars': 'rating'  # 为了兼容原来的 liked 分界
+        }, inplace=True)
+
+        movies_df.rename(columns={
+            'business_id': 'movieId',
+            'name': 'title',
+            'categories': 'genres'
+        }, inplace=True)
+        print(f"Loaded Yelp ratings: {len(ratings_df)}, businesses: {len(movies_df)}, users: {len(users_df)}")
+        return ratings_df, movies_df, users_df
+
     def preprocess(self, ratings_df):  
         """预处理评分数据  
         
@@ -59,8 +92,17 @@ class DataProcessor:
         # 这里可以添加更多预处理步骤，如去除评分过少的用户和电影  
         # 目前只保留评分 >= 3.5 的作为正例  
         processed_df = ratings_df.copy()  
-        processed_df['liked'] = (processed_df['rating'] >= 3.5).astype(int)  
-        
+        processed_df['liked'] = (processed_df['rating'] >= 3.5).astype(int)
+
+        # 过滤冷用户（评分数太少的用户）
+        user_counts = processed_df['userId'].value_counts()
+        active_users = user_counts[user_counts >= 2].index
+        processed_df = processed_df[processed_df['userId'].isin(active_users)]
+        # 过滤冷商家（被评分次数太少的商户）
+        item_counts = processed_df['movieId'].value_counts()
+        popular_items = item_counts[item_counts >= 3].index
+        processed_df = processed_df[processed_df['movieId'].isin(popular_items)]
+
         # 确保用户ID和电影ID是连续的整数  
         user_ids = processed_df['userId'].unique()  
         movie_ids = processed_df['movieId'].unique()  
@@ -72,7 +114,7 @@ class DataProcessor:
         processed_df['movie_idx'] = processed_df['movieId'].map(movie_map)
 
         # processed_df = processed_df.sample(frac=0.1, random_state=42)
-        
+        print(f"Processed ratings: {len(processed_df)} (Users: {len(user_ids)}, Items: {len(movie_ids)})")
         return processed_df
     
     def create_user_item_matrix(self, ratings_df):  

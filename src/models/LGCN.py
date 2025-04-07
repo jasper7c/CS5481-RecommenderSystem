@@ -166,6 +166,7 @@ class LightGCN(BaseRecommender):
             # 反向传播
             self.optimizer.zero_grad()
             loss.backward()
+            # print(self.embedding.weight.grad.norm())  # 如果是 0，说明没有梯度
             self.optimizer.step()
             
             total_loss += loss.item()
