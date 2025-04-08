@@ -20,14 +20,14 @@ class Evaluator:
         
         for _, row in self.test_data.iterrows():  
             user_id = row['userId']  
-            item_id = row['movieId']  
+            item_id = row['itemId']  
             self.user_items[user_id].append(item_id)  
     
     def hr_at_k(self, recommendations, k=10):  
         """计算HR@K (Hit Ratio at K)  
         
         Args:  
-            recommendations: {user_id: [movie_id1, movie_id2, ...]} 格式的推荐结果  
+            recommendations: {user_id: [item_id1, item_id2, ...]} 格式的推荐结果  
             k: 推荐列表长度  
             
         Returns:  
@@ -52,7 +52,7 @@ class Evaluator:
         """计算NDCG@K (Normalized Discounted Cumulative Gain at K)  
         
         Args:  
-            recommendations: {user_id: [movie_id1, movie_id2, ...]} 格式的推荐结果  
+            recommendations: {user_id: [item_id1, item_id2, ...]} 格式的推荐结果  
             k: 推荐列表长度  
             
         Returns:  
@@ -89,7 +89,7 @@ class Evaluator:
         """计算MRR@K (Mean Reciprocal Rank at K)
 
         Args:
-            recommendations: {user_id: [movie_id1, movie_id2, ...]} 格式的推荐结果
+            recommendations: {user_id: [item_id1, item_id2, ...]} 格式的推荐结果
             k: 推荐列表长度
 
         Returns:
@@ -125,7 +125,7 @@ class Evaluator:
         """计算Recall@K (召回率@K)
 
         Args:
-            recommendations: {user_id: [movie_id1, movie_id2, ...]} 格式的推荐结果
+            recommendations: {user_id: [item_id1, item_id2, ...]} 格式的推荐结果
             k: 推荐列表长度
 
         Returns:
