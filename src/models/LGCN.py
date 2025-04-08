@@ -5,11 +5,12 @@ import torch.nn.functional as F
 from collections import defaultdict
 from torch.sparse import FloatTensor as SparseTensor
 from .base_recommender import BaseRecommender
+from .baseline import PopularityRecommender
 
 class LightGCN(BaseRecommender):
     """基于LightGCN的推荐算法，使用BPR损失"""
     
-    def __init__(self, embed_dim=64, n_layers=3, lr=0.001, epochs=100, batch_size=1024, weight_decay=1e-4, k=20, num_negatives=100):
+    def __init__(self, embed_dim=64, n_layers=4, lr=0.001, epochs=100, batch_size=1024, weight_decay=1e-4):
         """初始化LightGCN推荐器
         
         Args:
@@ -19,7 +20,6 @@ class LightGCN(BaseRecommender):
             epochs (int): 训练轮数
             batch_size (int): 批大小
             weight_decay (float): L2正则化系数
-            k (int): 推荐时保留的Top-K物品数量（基类recommend方法参数）
         """
         super().__init__("LightGCN")
         self.embed_dim = embed_dim
@@ -27,13 +27,8 @@ class LightGCN(BaseRecommender):
         self.lr = lr
         self.epochs = epochs
         self.batch_size = batch_size
-        self.weight_decay = weight_decay  # 仅用于初始嵌入正则化
-        self.k = k
-        self.num_negatives = num_negatives  # 负样本池大小
-
-        # 初始化设备
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+        self.weight_decay = weight_decay
+        
         # 以下属性在fit时初始化
         self.user_mappings = None
         self.item_mappings = None
@@ -42,12 +37,14 @@ class LightGCN(BaseRecommender):
         self.adj_matrix = None          # 归一化后的邻接矩阵（稀疏张量）
         self.embedding = None           # 用户和物品的嵌入
         self.user_pos_items = None      # 记录每个用户的交互物品
+        
+        self.coldstart = PopularityRecommender()
 
     def fit(self, train_data):
         """训练模型
         
         Args:
-            train_data: 训练数据，包含userId和movieId字段
+            train_data: 训练数据，包含userId和itemId字段
         """
         # 创建用户和物品的映射
         self.user_mappings = {
@@ -55,16 +52,18 @@ class LightGCN(BaseRecommender):
             'id_to_idx': {id: idx for idx, id in enumerate(train_data['userId'].unique())}
         }
         self.item_mappings = {
-            'idx_to_id': dict(enumerate(train_data['movieId'].unique())),
-            'id_to_idx': {id: idx for idx, id in enumerate(train_data['movieId'].unique())}
+            'idx_to_id': dict(enumerate(train_data['itemId'].unique())),
+            'id_to_idx': {id: idx for idx, id in enumerate(train_data['itemId'].unique())}
         }
         self.n_users = len(self.user_mappings['id_to_idx'])
         self.n_items = len(self.item_mappings['id_to_idx'])
         
+        self.coldstart.fit(train_data)
+        
         # 记录用户的交互物品（用于负采样和排除已知物品）
         self.user_pos_items = defaultdict(set)
         user_indices = train_data['userId'].map(self.user_mappings['id_to_idx']).tolist()
-        item_indices = train_data['movieId'].map(self.item_mappings['id_to_idx']).tolist()
+        item_indices = train_data['itemId'].map(self.item_mappings['id_to_idx']).tolist()
         for u, i in zip(user_indices, item_indices):
             self.user_pos_items[u].add(i)
         
@@ -175,7 +174,7 @@ class LightGCN(BaseRecommender):
     def recommend(self, user_id, n_recommendations=10, exclude_known=True):
         """生成推荐列表"""
         if user_id not in self.user_mappings['id_to_idx']:
-            return []
+            return self.coldstart.recommend(user_id, n_recommendations)
         
         user_idx = self.user_mappings['id_to_idx'][user_id]
         user_tensor = torch.LongTensor([user_idx]).to(self.device)

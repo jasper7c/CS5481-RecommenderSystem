@@ -2,6 +2,7 @@ import numpy as np
 from collections import defaultdict
 from .base_recommender import BaseRecommender
 
+
 class RandomRecommender(BaseRecommender):
     """随机推荐算法"""
 
@@ -17,13 +18,13 @@ class RandomRecommender(BaseRecommender):
             train_data: 训练数据，包含user_id, item_id字段
         """
         # 获取所有物品的集合
-        self.item_set = set(train_data['movieId'].unique())
+        self.item_set = set(train_data['itemId'].unique())
 
         # 记录每个用户已交互的物品
         self.user_interactions = defaultdict(set)
         for _, row in train_data.iterrows():
             user_id = row['userId']
-            item_id = row['movieId']
+            item_id = row['itemId']
             self.user_interactions[user_id].add(item_id)
 
     def recommend(self, user_id, n_recommendations=10, exclude_known=True):
@@ -49,6 +50,7 @@ class RandomRecommender(BaseRecommender):
         np.random.shuffle(items)
         return items[:n_recommendations]
 
+
 class PopularityRecommender(BaseRecommender):
     """基于流行度的推荐算法"""
 
@@ -61,18 +63,18 @@ class PopularityRecommender(BaseRecommender):
         """训练模型
 
         Args:
-            train_data: 训练数据，包含user_id, movieId, rating字段
+            train_data: 训练数据，包含user_id, itemId, rating字段
         """
         # 计算每个物品的流行度（评分总和或出现次数）
-        item_popularity = train_data.groupby('movieId')['rating'].sum().reset_index()
+        item_popularity = train_data.groupby('itemId')['rating'].sum().reset_index()
         item_popularity = item_popularity.sort_values('rating', ascending=False)
-        self.popular_items = item_popularity['movieId'].tolist()
+        self.popular_items = item_popularity['itemId'].tolist()
 
         # 记录每个用户已交互的物品
         self.user_interactions = defaultdict(set)
         for _, row in train_data.iterrows():
             user_id = row['userId']
-            item_id = row['movieId']
+            item_id = row['itemId']
             self.user_interactions[user_id].add(item_id)
 
     def recommend(self, user_id, n_recommendations=10, exclude_known=True):
