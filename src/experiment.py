@@ -6,6 +6,7 @@ from models.itemcf2 import ItemCF
 from models.baseline import RandomRecommender
 from models.baseline import PopularityRecommender
 from models.content_based import ContentBased
+from models.friend_based import FriendBasedCF
 from models.SVD import SVDRecommender
 from models.NGCN import NGCNRecommender
 import pandas as pd
@@ -14,6 +15,24 @@ from evaluation import Evaluator
 import sys
 import os
 import io
+import random
+import numpy as np
+import torch
+
+# 设置随机种子
+seed = 42
+
+# Python 标准库
+random.seed(seed)
+
+# NumPy
+np.random.seed(seed)
+
+# PyTorch
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)  # 如果使用 GPU
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 class Tee:
     def __init__(self, filename, mode='w'):
@@ -52,11 +71,11 @@ MODEL_CONFIG = {
     },
     'lightgcn': {
         'class': LightGCN,
-        'params': ['embed_dim', 'n_layers', 'epochs', 'lr']
+        'params': ['embed_dim', 'n_layers', 'epochs']
     },
     'ngcn': {
         'class': NGCNRecommender,
-        'params': ['embed_dim', 'n_layers','epochs', 'lr']
+        'params': ['embed_dim', 'n_layers','epochs']
     },
     'random': {
         'class': RandomRecommender,
@@ -64,8 +83,16 @@ MODEL_CONFIG = {
     },
 
     'popular': {
-            'class': PopularityRecommender,
-            'params': []
+        'class': PopularityRecommender,
+        'params': []
+    },
+    'content': {
+        'class': ContentBased,
+        'params': []
+    },
+    'friend': {
+        'class': FriendBasedCF,
+        'params': []
     }
 }
 
@@ -128,7 +155,13 @@ def main(args):
     recommender = model_info['class'](**model_params)
 
     print(f"Training {recommender.name} with params: {model_params}")
-    recommender.fit(train_df)
+    
+    if args.model == 'content':
+        recommender.fit(train_df, movies_df)
+    elif args.model == 'friend': 
+        recommender.fit(train_df, user_friends_df)
+    else:
+        recommender.fit(train_df)
 
     # 4. 模型评估
     print("\n=== Model Evaluation ===")
@@ -177,8 +210,6 @@ if __name__ == "__main__":
                         help="LightGCN/NGCN的嵌入维度")
     parser.add_argument('--n_layers', type=int,
                         help="LightGCN/NGCN的层数")
-    parser.add_argument('--lr', type=float,
-                        help="LightGCN/NGCN的学习率")
     parser.add_argument('--epochs', type=int,
                         help="LightGCN/NGCN的训练轮数")
 
