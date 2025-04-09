@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer  
 from sklearn.metrics.pairwise import cosine_similarity  
 from .base_recommender import BaseRecommender  
+from .baseline import PopularityRecommender
 
 # 尝试导入GPU加速库  
 try:  
@@ -26,6 +27,7 @@ class ContentBased(BaseRecommender):
         self.movie_indices = {}  
         self.movie_ids = []  
         self.use_gpu = GPU_AVAILABLE  
+        self.coldstart = PopularityRecommender()
         
     def fit(self, train_data, movies_df):  
         """训练模型  
@@ -37,6 +39,8 @@ class ContentBased(BaseRecommender):
         print(f"Using GPU acceleration: {self.use_gpu}")  
         
         self.movies_df = movies_df.copy()  
+        
+        self.coldstart.fit(train_data)
         
         # 预处理电影特征  
         self._preprocess_movie_features()  
@@ -135,7 +139,7 @@ class ContentBased(BaseRecommender):
             推荐的物品ID列表  
         """  
         if user_id not in self.user_profiles:  
-            return []  
+            return self.coldstart.recommend(user_id, n_recommendations)
             
         # 获取用户画像  
         user_profile = self.user_profiles[user_id]  
