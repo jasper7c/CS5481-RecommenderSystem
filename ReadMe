@@ -1,0 +1,13 @@
+摘要部分的Our findings reveal
+that while GNN-based methods generally outperform traditional
+approaches on denser datasets, collaborative filtering techniques
+maintain competitive performance in specific contexts, particularly
+with sparse interaction data根据实际情况修改
+
+3.4 Hyperparameter Optimization里面的参数设置也要根据实际情况修改
+
+4 EXPERIMENTAL RESULTS有的因为表格大小原因仅添加部分数据，有的是没加很全，可以根据需要添加
+
+这个分支的data和src是git的时候多传了，不用理会
+
+然后report可以用overleaf进行编译，注意要加上bib文件
