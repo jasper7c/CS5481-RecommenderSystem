@@ -119,7 +119,43 @@ class DataProcessor:
             f"Loaded user_artists: {len(rated_df)}, user_friends: {len(user_friends_df)}, artists: {len(artists_df)}")
 
         return rated_df, user_friends_df, artists_df
-    
+
+    def load_yelp_data(self):
+        """
+        加载 Yelp 数据集（review.csv, user.csv, business.csv）
+
+        Returns:
+            ratings_df: 包含 userId, itemId, rating, timestamp（可选）
+            users_df: 原始用户信息
+            business_df: 原始商家信息
+        """
+
+        # 1. 加载基础表格
+        reviews = pd.read_csv(f"{self.data_path}review.csv")
+        users = pd.read_csv(f"{self.data_path}user.csv")
+        businesses = pd.read_csv(f"{self.data_path}business.csv")
+
+        # 2. 清洗 & 重命名字段统一格式（兼容已有框架）
+        ratings_df = reviews.rename(columns={
+            'user_id': 'userId',
+            'business_id': 'itemId',
+            'stars': 'rating',
+            'date': 'timestamp'
+        })[['userId', 'itemId', 'rating', 'timestamp']]
+
+        # 3. 过滤活跃用户（如评论数 ≥10）
+        active_users = users[users['review_count'] >= 10]['user_id']
+        ratings_df = ratings_df[ratings_df['userId'].isin(active_users)]
+
+        # 4. 类型转换（保证兼容性）
+        ratings_df['rating'] = ratings_df['rating'].astype(float)
+        ratings_df['timestamp'] = pd.to_datetime(ratings_df['timestamp'])
+
+        # 5. 返回（users 和 businesses 原样保留）
+        print(f" Loaded Yelp: {len(ratings_df)} ratings from {ratings_df['userId'].nunique()} users")
+
+        return ratings_df, users, businesses
+
     def preprocess(self, ratings_df):  
         """预处理评分数据  
         

@@ -124,6 +124,9 @@ def main(args):
         ratings_df, movies_df, users_df = data_processor.load_dat_data()
     elif args.dataset == 'lastfm':
         ratings_df, user_friends_df, artists_df = data_processor.load_lastfm_data()
+    elif args.dataset == 'yelp':
+        ratings_df, users_df, business_df = data_processor.load_yelp_data()
+
 
     processed_df = data_processor.preprocess(ratings_df)
 
@@ -182,7 +185,7 @@ if __name__ == "__main__":
 
     # 数据集参数
     parser.add_argument('--dataset', required=True,
-                        choices=['ml-1m', 'lastfm'],
+                        choices=['ml-1m', 'lastfm', 'yelp'],
                         help="数据集名称")
     parser.add_argument('--data_path', required=True,
                         help="原始数据目录路径")
@@ -220,6 +223,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     validate_args(args)
+    #mkdir log
+    os.makedirs('./log', exist_ok=True)
     # 生成带时间戳的日志文件
     log_filename = f"./log/experiment_log_{time.strftime('%Y%m%d_%H%M%S')}.txt"
     with Tee(log_filename):
