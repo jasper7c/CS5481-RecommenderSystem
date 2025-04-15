@@ -142,9 +142,11 @@ class DataProcessor:
             'stars': 'rating',
             'date': 'timestamp'
         })[['userId', 'itemId', 'rating', 'timestamp']]
+        # 统一 business_id -> itemId（用于模型匹配）
+        businesses.rename(columns={'business_id': 'itemId'}, inplace=True)
 
-        # 3. 过滤活跃用户（如评论数 ≥10）
-        active_users = users[users['review_count'] >= 10]['user_id']
+        # 3. 过滤活跃用户（如评论数 ≥20）
+        active_users = users[users['review_count'] >= 20]['user_id']
         ratings_df = ratings_df[ratings_df['userId'].isin(active_users)]
 
         # 4. 类型转换（保证兼容性）
@@ -164,11 +166,10 @@ class DataProcessor:
 
         Returns:  
             处理后的评分数据  
-        """  
-        # 这里可以添加更多预处理步骤，如去除评分过少的用户和电影  
-        # 目前只保留评分 >= 4 的作为正例  
+        """
+
         processed_df = ratings_df.copy()  
-        processed_df['liked'] = (processed_df['rating'] >= 3.7).astype(int)  
+        processed_df['liked'] = (processed_df['rating'] >= 3.5).astype(int)
         
         # 确保用户ID和电影ID是连续的整数  
         user_ids = processed_df['userId'].unique()  
@@ -223,8 +224,8 @@ class DataProcessor:
         for user_id in ratings_df['user_idx'].unique():  
             user_ratings = ratings_df[ratings_df['user_idx'] == user_id]  
             # 只考虑用户喜欢的电影  
-            liked_items = user_ratings[user_ratings['liked'] == 1]  
-            # liked_items = user_ratings.copy()
+            # liked_items = user_ratings[user_ratings['liked'] == 1]
+            liked_items = user_ratings.copy()
             if len(liked_items) >= 2:  # 至少需要2个喜欢的电影才能划分  
                 user_train, user_test = train_test_split(  
                     liked_items,   

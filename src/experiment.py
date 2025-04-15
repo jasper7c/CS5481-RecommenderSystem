@@ -5,6 +5,7 @@ from models.user_cf import UserCF
 from models.itemcf2 import ItemCF
 from models.baseline import RandomRecommender
 from models.baseline import PopularityRecommender
+from models.CityPopularRecommender import CityPopularityRecommender
 from models.content_based import ContentBased
 from models.friend_based import FriendBasedCF
 from models.SVD import SVDRecommender
@@ -86,6 +87,10 @@ MODEL_CONFIG = {
         'class': PopularityRecommender,
         'params': []
     },
+    'citypopular': {
+        'class': CityPopularityRecommender,
+        'params': []
+    },
     'content': {
         'class': ContentBased,
         'params': []
@@ -163,8 +168,11 @@ def main(args):
         recommender.fit(train_df, movies_df)
     elif args.model == 'friend': 
         recommender.fit(train_df, user_friends_df)
+    elif args.model == 'citypopular':
+        recommender.fit(train_df, business_df)
     else:
         recommender.fit(train_df)
+
 
     # 4. 模型评估
     print("\n=== Model Evaluation ===")
