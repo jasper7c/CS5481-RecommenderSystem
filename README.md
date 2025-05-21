@@ -6,18 +6,31 @@ This code repository contains implementations of various recommendation algorith
 ## Directory Structure
 
 ├── base_recommender.py          # Base class for all recommender algorithms
+
 ├── models/
+
 │   ├── user_cf.py               # User-based Collaborative Filtering
+
 │   ├── itemcf.py                # Item-based Collaborative Filtering
+
 │   ├── baseline.py              # Baseline models (Random and Popularity recommenders)
+
 │   ├── content_based.py         # Content-based Recommendation
+
 │   ├── friend_based.py          # Friend-based Collaborative Filtering
+
 │   ├── SVD.py                   # Matrix Factorization with SVD
+
 │   ├── NGCF.py                  # Neural Graph Collaborative Filtering
+
 │   ├── LGCN.py                  # LightGCN Graph Neural Network
+
 │   └── init.py
+
 ├── data_processor.py            # Data processing utilities
+
 ├── evaluation.py                # Evaluation metrics and tools
+
 └── experiment.py                # Main experiment script
 
 
